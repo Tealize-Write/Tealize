@@ -636,13 +636,14 @@
       font-size: 1.05rem;
     }
 
-    .full-width-stack {
-      display: flex;
-      flex-direction: column;
-      gap: 35px;
+    /* 遊戲圖片區塊：改回網格 (Game Grid) 以縮小圖片尺寸 */
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
       margin-top: 35px;
     }
-    .full-width-stack .img-wrap { aspect-ratio: 16 / 9; }
+    .game-grid .img-wrap { aspect-ratio: 16 / 9; }
 
     .cta-btn {
       width: auto;
@@ -1008,7 +1009,7 @@
           <i class="fa-solid fa-triangle-exclamation"></i> 警告：Sanity Check Required.
         </p>
 
-        <div class="full-width-stack">
+        <div class="game-grid">
           <a href="https://responselessaircra.wixsite.com/x-destroyer" target="_blank" rel="noopener noreferrer" class="link-card">
             <div class="img-wrap">
               <img src="Friend_or_Fraud1.jpg" alt="反轉的真實 PART 1" loading="lazy" />
@@ -1055,50 +1056,88 @@
           &nbsp;&nbsp;<span class="kwd">def</span> <span class="func">__init__</span>(self):<br />
           &nbsp;&nbsp;&nbsp;&nbsp;self.status = <span class="str">"被創作拖著走"</span><br />
           &nbsp;&nbsp;&nbsp;&nbsp;self.skills = [<span class="str">"Python"</span>, <span class="str">"Writing"</span>, <span class="str">"GameDev"</span>]<br />
-          &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># 文字是code，傳說是function，一起來 Run 這個世界。</span>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># 文字是 code，傳說是 function，一起來 Run 這個世界。</span>
         </div>
       </header>
 
       <div class="code-content" style="opacity: 0; transition: opacity 1s var(--ease-smooth) 0.5s;">
         <div class="code-project">
-          <h2 class="code-h2">>> Projects / Story-Command</h2>
+          <h2 class="code-h2">>> Projects / Story-Command Awakens：字命覺醒</h2>
+          <p>無論是創作、迷因、傳說都能產生魔法的校園奇幻作品。</p>
           <div class="code-block-styled">
-            <span class="kwd">def</span> <span class="func">cast_magic</span>(text):<br />
-            &nbsp;&nbsp;<span class="kwd">if</span> meme <span class="kwd">in</span> text:<br />
-            &nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">return</span> <span class="str">"Reality_Distortion"</span>
+            <span class="kwd">import</span> <span class="str">magic</span> <span class="kwd">as</span> <span class="str">mg</span><br />
+            <span class="kwd">from</span> <span class="str">world</span> <span class="kwd">import</span> <span class="str">meme, legend</span><br /><br />
+            <span class="kwd">def</span> <span class="func">cast_spell</span>(text):<br />
+            &nbsp;&nbsp;<span class="comment">"""將文字轉化為現實干涉力"""</span><br />
+            &nbsp;&nbsp;<span class="kwd">return</span> <span class="str">mg.execute(text)</span><br /><br />
+            <span class="comment"># 最新進度：第二集已生成</span>
           </div>
+          <p style="font-size: 0.9rem; color: #888; margin-bottom:15px;">
+            特色：創作魔法的設定看起來就像呼叫程式函式？沒錯，因為我喜歡 Python。<br>
+            想看迷因、傳說、推理大亂鬥，請參閱本專案。
+          </p>
           <a href="https://www.kadokado.com.tw/book/1425" target="_blank" rel="noopener noreferrer" class="code-link">Vol.1_Link</a>
           <a href="https://www.kadokado.com.tw/book/42308" target="_blank" rel="noopener noreferrer" class="code-link">Vol.2_Link</a>
           <a href="https://www.kadokado.com.tw/book/65322" target="_blank" rel="noopener noreferrer" class="code-link">Side_Story_Link</a>
+
+          <div style="margin-top: 25px; padding-top: 15px; border-top: 1px dashed #444;">
+             <h3 style="font-size: 1.1rem; color: #aaa; margin-bottom: 10px;">>> Sub-Module: 創作者特質測驗</h3>
+             <div class="code-block-styled">
+                <span class="kwd">if</span> user.is_creator:<br>
+                &nbsp;&nbsp;<span class="func">run_diagnostics</span>(user.mind)<br>
+                <span class="comment"># 鑑定你的創作屬性...</span>
+             </div>
+             <a href="https://arya601.github.io/College_Psychological_Test/" target="_blank" rel="noopener noreferrer" class="code-link">Run_Test.exe</a>
+          </div>
         </div>
 
         <div class="code-project">
-          <h2 class="code-h2">>> Projects / Crossing_the_Soil</h2>
+          <h2 class="code-h2">>> Projects / 是誰把穿越者種在土裡</h2>
           <p style="color: #a9b7c6; margin-bottom: 15px;">>>> 17歲的蘇海躍選擇結束生命，卻在陌生山林的泥土裡被挖了出來。</p>
+          
+          <div class="code-block-styled">
+            <span class="kwd">class</span> <span class="func">Isekai_Protagonist</span>:<br>
+            &nbsp;&nbsp;<span class="kwd">def</span> <span class="func">__init__</span>(self):<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;self.origin = <span class="str">"Suicide"</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;self.location = <span class="str">"Soil"</span><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;self.status = <span class="str">"Confused"</span><br><br>
+            <span class="comment"># Environment Settings:</span><br>
+            <span class="str">Environment_Config</span> = {<br>
+            &nbsp;&nbsp;<span class="str">"Alpha"</span>: <span class="kwd">True</span>,<br>
+            &nbsp;&nbsp;<span class="str">"Omega"</span>: <span class="kwd">True</span>,<br>
+            &nbsp;&nbsp;<span class="str">"Ghost"</span>: <span class="str">"Attached_to_Pheromones"</span>,<br>
+            &nbsp;&nbsp;<span class="str">"Dinosaur"</span>: <span class="str">"Walking_on_Street"</span><br>
+            }
+          </div>
+
           <a href="https://www.kadokado.com.tw/book/60627" target="_blank" rel="noopener noreferrer" class="code-link">Read_Novel()</a>
         </div>
 
         <div class="code-project">
           <h2 class="code-h2" style="color: #ff3333; text-shadow: 0 0 15px #ff3333;">
-            >>> Projects / The_Reversed_Truth
+            >>> Projects / 反轉的真實
           </h2>
-          <p style="color: #ff3333; margin-bottom: 15px;">>>> ERROR: Sanity Check Required. Horror RPG.</p>
+          <p>台灣本土恐怖 RPG 系列。偶爾降落分享美術進度與關卡設計。</p>
+          <p style="margin-top: 1rem; color: #ff3333; font-style: italic; margin-bottom: 15px;">
+             ⚠️ 警告：包含大量紅色顏料與精神污染（開玩笑的，但也許不是）。
+          </p>
 
           <div class="code-block-styled" style="border-left-color: #ff3333; box-shadow: inset 0 0 20px #300;">
-            <span class="kwd" style="color: #ff5555;">while</span> <span class="kwd" style="color: #ff5555;">True</span>:<br />
-            &nbsp;&nbsp;truth = <span class="func" style="color: #ff8888;">reverse</span>(reality)<br />
-            &nbsp;&nbsp;<span class="kwd" style="color: #ff5555;">if</span> truth == <span class="str" style="color: #ffaaaa;">"BLOOD"</span>: <span class="kwd" style="color: #ff5555;">break</span>
+            <span class="comment"># SYSTEM WARNING: SANITY LEVEL CRITICAL</span><br>
+            <span class="kwd">try</span>:<br>
+            &nbsp;&nbsp;<span class="func">enter_subway</span>()<br>
+            <span class="kwd">except</span> <span class="str">RealityCollapseError</span>:<br>
+            &nbsp;&nbsp;<span class="func">see_rope</span>() <span class="comment"># Don't look up</span><br>
+            &nbsp;&nbsp;sanity -= <span class="str">50</span><br><br>
+            <span class="kwd" style="color:#ff5555">while</span> <span class="kwd" style="color:#ff5555">True</span>:<br />
+            &nbsp;&nbsp;truth = <span class="func" style="color:#ff8888">reverse</span>(reality)<br />
+            &nbsp;&nbsp;<span class="kwd" style="color:#ff5555">if</span> truth == <span class="str" style="color:#ffaaaa;">"BLOOD"</span>: <span class="kwd" style="color:#ff5555">break</span>
           </div>
 
           <a href="https://responselessaircra.wixsite.com/x-destroyer" target="_blank" rel="noopener noreferrer"
-             class="code-link" style="border-color: #ff3333; color: #ff3333;">Official_Site</a>
+             class="code-link" style="border-color: #ff3333; color: #ff3333;">官網</a>
           <a href="https://forum.gamer.com.tw/C.php?bsn=4918&snA=28697" target="_blank" rel="noopener noreferrer"
-             class="code-link" style="border-color: #ff3333; color: #ff3333;">Bahamut_Thread</a>
-        </div>
-
-        <div class="code-project">
-          <h2 class="code-h2">>> Execute / Creator_Test</h2>
-          <a href="https://arya601.github.io/College_Psychological_Test/" target="_blank" rel="noopener noreferrer" class="code-link">Run_Test.exe</a>
+             class="code-link" style="border-color: #ff3333; color: #ff3333;">巴哈姆特</a>
         </div>
       </div>
 
