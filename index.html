@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh-TW" data-theme="dark" data-mode="visual">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>兌現藍 | 虛空魔導終端</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Noto+Sans+TC:wght@300;400;700&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* =========================================
+           變數設定
+           ========================================= */
+        :root {
+            /* 視覺版 - 暗夜 */
+            --bg-color: #030507;
+            --text-main: #ffffff;
+            --text-sub: #94a3b8;
+            --accent-color: #00f2fe;
+            --accent-glow: #4facfe;
+            --glass-bg: rgba(10, 15, 30, 0.75);
+            --glass-border: rgba(0, 242, 254, 0.3);
+            --glass-shine: rgba(255, 255, 255, 0.1);
+            --particle-color: #00f2fe;
+            
+            /* 程式版 - 駭客綠 */
+            --code-bg: #080808;
+            --code-text: #e0e0e0;
+            --code-green: #0f0; /* 更亮的螢光綠 */
+            --code-dim: #666;
+            --crt-scanline: rgba(0, 255, 0, 0.1);
+        }
+
+        /* 視覺版 - 白日 */
+        [data-theme="light"] {
+            --bg-color: #f1f5f9;
+            --text-main: #0f172a;
+            --text-sub: #475569;
+            --accent-color: #0284c7;
+            --accent-glow: #38bdf8;
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(2, 132, 199, 0.25);
+            --glass-shine: rgba(255, 255, 255, 0.6);
+            --particle-color: #0ea5e9;
+        }
+
+        /* 全域設定 - 修復滑鼠問題 */
+        * { margin: 0; padding: 0; box-sizing: border-box; transition: background-color 0.4s, color 0.4s, opacity 0.4s; }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Noto Sans TC', sans-serif;
+            line-height: 1.7;
+            overflow-x: hidden;
+            min-height: 100vh;
+            cursor: none; /* 只在 body 層級隱藏預設游標 */
+        }
+        /* 確保連結和按鈕也不顯示預設游標 */
+        a, button { cursor: none; }
+
+        /* 控制面板 */
+        .control-panel {
+            position: fixed; top: 20px; right: 20px; z-index: 2000;
+            display: flex; gap: 15px;
+        }
+        .control-btn {
+            width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--accent-color); background: rgba(0,0,0,0.3); color: var(--accent-color); font-size: 1.2rem; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .control-btn:hover { background: var(--accent-color); color: var(--bg-color); transform: scale(1.1); box-shadow: 0 0 20px var(--accent-color); }
+
+        .view-mode { display: block; opacity: 1; transition: opacity 0.5s ease; }
+        .view-mode.hidden { display: none; opacity: 0; }
+
+        /* =========================================
+           MODE A: 視覺版 (Visual Mode)
+           ========================================= */
+        #visual-mode { position: relative; padding-bottom: 50px; }
+
+        /* 特效層 */
+        .scan-lines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 900; background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2)); background-size: 100% 4px; opacity: 0.15; }
+        .bg-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background: radial-gradient(circle at 50% 30%, var(--accent-glow) 0%, transparent 60%); opacity: 0.25; filter: blur(100px); animation: pulseGlow 8s ease-in-out infinite alternate; }
+        @keyframes pulseGlow { 0% { opacity: 0.2; transform: scale(1); } 100% { opacity: 0.3; transform: scale(1.1); } }
+        .magic-particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; }
+        .particle { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: var(--particle-color); animation: floatUp linear infinite; opacity: 0; box-shadow: 0 0 5px var(--accent-color); }
+        @keyframes floatUp { 0% { transform: translateY(100vh) scale(0); opacity: 0; } 50% { opacity: 0.8; } 100% { transform: translateY(-10vh) scale(2); opacity: 0; } }
+
+        /* 游標特效 - 加強 z-index 確保顯示 */
+        .cursor-dot { width: 10px; height: 10px; background-color: var(--accent-color); box-shadow: 0 0 20px var(--accent-color), 0 0 10px #fff; position: fixed; border-radius: 50%; z-index: 10001; pointer-events: none; transform: translate(-50%, -50%); transition: background-color 0.2s; mix-blend-mode: screen;}
+        .cursor-outline { width: 40px; height: 40px; border: 1.5px solid var(--accent-color); position: fixed; border-radius: 50%; z-index: 10000; pointer-events: none; transition: transform 0.1s ease-out; animation: cursorPulse 2s infinite; transform: translate(-50%, -50%); box-shadow: 0 0 10px var(--glass-border);}
+        @keyframes cursorPulse { 0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; } 50% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.6; } }
+
+        .container-visual { max-width: 980px; margin: 0 auto; padding: 100px 20px; perspective: 1000px; }
+
+        /* Header */
+        .avatar-visual { width: 130px; height: 130px; border-radius: 50%; border: 2px solid var(--accent-color); display: flex; align-items: center; justify-content: center; font-size: 4rem; margin: 0 auto 1.5rem; background: #0f172a; box-shadow: 0 0 30px rgba(0, 242, 254, 0.4); position: relative; z-index: 2; }
+        .avatar-ring { position: absolute; top: -10px; left: -10px; right: -10px; bottom: -10px; border: 1px dashed var(--accent-color); border-radius: 50%; animation: spin 20s linear infinite; opacity: 0.5; z-index: -1;}
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .glitch-name { font-family: 'Orbitron'; font-size: 3.8rem; font-weight: 900; letter-spacing: 4px; color: var(--text-main); text-shadow: 2px 2px 0px #ff0055, -2px -2px 0px #00f2fe; margin-bottom: 15px; position: relative; display: inline-block; }
+        .glitch-name::before, .glitch-name::after { content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.8; }
+        .glitch-name::before { color: #ff0055; z-index: -1; animation: glitch-anim-1 2s infinite linear alternate-reverse; }
+        .glitch-name::after { color: #00f2fe; z-index: -2; animation: glitch-anim-2 3s infinite linear alternate-reverse; }
+        @keyframes glitch-anim-1 { 0% { clip-path: inset(20% 0 80% 0); transform: translate(-2px, 1px); } 100% { clip-path: inset(60% 0 10% 0); transform: translate(2px, -1px); } }
+        @keyframes glitch-anim-2 { 0% { clip-path: inset(10% 0 60% 0); transform: translate(2px, 1px); } 100% { clip-path: inset(80% 0 5% 0); transform: translate(-2px, -1px); } }
+        .neon-tag { padding: 6px 18px; border-radius: 4px; border: 1px solid var(--accent-color); color: var(--accent-color); font-family: 'Orbitron'; font-size: 0.75rem; background: rgba(0, 242, 254, 0.05); margin: 5px; display: inline-block; box-shadow: 0 0 5px rgba(0, 242, 254, 0.1); transition: 0.3s; }
+        .neon-tag:hover { background: var(--accent-color); color: var(--bg-color); box-shadow: 0 0 20px var(--accent-color); transform: translateY(-2px); }
+
+        /* 玻璃卡片 */
+        .glass-panel { background: var(--glass-bg); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 2.5rem; margin-bottom: 3.5rem; position: relative; overflow: hidden; transition: transform 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease; box-shadow: 0 15px 35px -10px rgba(0,0,0,0.5); opacity: 0; animation: fadeUpDecode 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+        .glass-panel::before { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), var(--glass-shine) 0%, transparent 50%); opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 1; mix-blend-mode: overlay; }
+        .glass-panel:hover { transform: translateY(-8px); border-color: var(--accent-color); box-shadow: 0 20px 60px -15px rgba(0, 242, 254, 0.25); }
+        .glass-panel:hover::before { opacity: 1; }
+        .glass-panel:nth-child(2) { animation-delay: 0.1s; } .glass-panel:nth-child(3) { animation-delay: 0.2s; } .glass-panel:nth-child(4) { animation-delay: 0.3s; }
+        @keyframes fadeUpDecode { 0% { opacity: 0; transform: translateY(30px); filter: blur(5px); } 100% { opacity: 1; transform: translateY(0); filter: blur(0); } }
+        .section-title { font-family: 'Orbitron'; font-size: 1.8rem; color: var(--text-main); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 15px; font-weight: 700; text-transform: uppercase; text-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        .section-title i { color: var(--accent-color); filter: drop-shadow(0 0 5px var(--accent-color)); }
+
+        /* 圖片連結樣式 */
+        .book-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 25px; margin-top: 30px; }
+        .link-card { display: block; position: relative; text-decoration: none; border-radius: 12px; overflow: hidden; border: 1px solid var(--glass-border); transition: 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); background: #000; }
+        .img-wrap { position: relative; overflow: hidden; aspect-ratio: 2/3; }
+        .img-wrap img { width: 100%; height: 100%; object-fit: cover; transition: 0.6s; filter: grayscale(40%) contrast(1.1); }
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 242, 254, 0.3); display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transition: 0.4s; backdrop-filter: blur(3px); }
+        .overlay i { font-size: 2rem; color: #fff; margin-bottom: 10px; transform: translateY(20px); transition: 0.4s; text-shadow: 0 0 10px var(--accent-color); }
+        .overlay span { font-family: 'Orbitron'; font-weight: bold; color: #fff; letter-spacing: 2px; transform: translateY(20px); transition: 0.4s; font-size: 0.9rem; }
+        .link-card:hover { transform: translateY(-5px) scale(1.02); border-color: var(--accent-color); box-shadow: 0 10px 30px rgba(0, 242, 254, 0.2); z-index: 10;}
+        .link-card:hover .img-wrap img { transform: scale(1.1); filter: grayscale(0%) contrast(1.2); }
+        .link-card:hover .overlay { opacity: 1; }
+        .link-card:hover .overlay i, .link-card:hover .overlay span { transform: translateY(0); }
+        .book-label { background: rgba(5, 10, 20, 0.9); color: var(--accent-color); padding: 12px; text-align: center; font-size: 0.85rem; font-family: 'Orbitron'; letter-spacing: 1px; border-top: 1px solid var(--glass-border); position: relative; z-index: 2;}
+
+        /* 新書橫向 Layout */
+        .novel-layout { display: flex; gap: 40px; flex-wrap: wrap; align-items: stretch; }
+        .novel-cover-link { flex: 1 1 300px; max-width: 350px; text-decoration: none; display: block; border-radius: 16px; overflow: hidden; border: 1px solid var(--glass-border); position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.4); transition: 0.4s; }
+        .novel-cover-link img { width: 100%; display: block; transition: 0.6s; filter: grayscale(20%); }
+        .novel-cover-link:hover { transform: scale(1.02); border-color: var(--accent-color); box-shadow: 0 0 30px rgba(0, 242, 254, 0.2); }
+        .novel-cover-link:hover img { filter: grayscale(0%); transform: scale(1.05); }
+        .novel-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); opacity: 0; transition: 0.3s; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 30px;}
+        .novel-cover-link:hover .novel-overlay { opacity: 1; }
+        .novel-info { flex: 2 1 300px; display: flex; flex-direction: column; justify-content: center;}
+        .quote { border-left: 4px solid var(--accent-color); padding: 15px 25px; color: var(--text-sub); font-style: italic; background: linear-gradient(90deg, rgba(0, 242, 254, 0.05), transparent); margin-bottom: 1.5rem; font-size: 1rem; position: relative; overflow: hidden;}
+        .quote::after { content:''; position: absolute; bottom:0; left:0; width:100%; height:1px; background: linear-gradient(90deg, var(--accent-color), transparent); opacity: 0.5; }
+
+        /* --- 修改重點：全寬度堆疊 (給遊戲用) --- */
+        .full-width-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            margin-top: 30px;
+        }
+        .full-width-stack .link-card {
+            width: 100%;
+        }
+        .full-width-stack .img-wrap {
+            aspect-ratio: 16 / 9; /* 改為寬螢幕比例 */
+        }
+
+        /* =========================================
+           MODE B: 程式版 (Code Mode) - 酷炫升級
+           ========================================= */
+        #code-mode {
+            background-color: var(--code-bg); color: var(--code-text);
+            font-family: 'JetBrains Mono', monospace; min-height: 100vh;
+            position: absolute; top: 0; left: 0; width: 100%; z-index: 100;
+            overflow: hidden;
+        }
+        /* CRT 螢幕特效層 */
+        #code-mode::before {
+            content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2; background-size: 100% 2px, 3px 100%; pointer-events: none; opacity: 0.3;
+        }
+        #code-mode::after {
+            content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0;
+            background: rgba(18, 16, 16, 0.1); opacity: 0; z-index: 2; pointer-events: none;
+            animation: flicker 0.15s infinite;
+        }
+        @keyframes flicker { 0% { opacity: 0.27861; } 5% { opacity: 0.34769; } 10% { opacity: 0.23604; } 15% { opacity: 0.10626; } 20% { opacity: 0.18128; } 25% { opacity: 0.33896; } 30% { opacity: 0.15383; } 35% { opacity: 0.12185; } 40% { opacity: 0.27287; } 45% { opacity: 0.20666; } 50% { opacity: 0.19478; } 55% { opacity: 0.1241; } 60% { opacity: 0.17382; } 65% { opacity: 0.21974; } 70% { opacity: 0.33436; } 75% { opacity: 0.13736; } 80% { opacity: 0.38418; } 85% { opacity: 0.17992; } 90% { opacity: 0.23897; } 95% { opacity: 0.14261; } 100% { opacity: 0.32737; } }
+
+        .container-code { max-width: 1000px; margin: 0 auto; padding: 80px 20px; position: relative; z-index: 3; }
+        .terminal-header { margin-bottom: 3rem; border-bottom: 1px dashed var(--code-dim); padding-bottom: 2rem; }
+        /* 螢光文字特效 */
+        .glow-text { color: var(--code-green); text-shadow: 0 0 10px var(--code-green); }
+        .cmd-line { margin-bottom: 10px; }
+        .code-h1 { font-size: 2.5rem; font-weight: 800; color: #fff; margin-bottom: 1rem; letter-spacing: -1px; text-transform: uppercase;}
+        .typing-cursor::after { content: '█'; animation: blink 1s infinite; margin-left: 5px; color: var(--code-green);}
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .code-block-styled { background: #111; padding: 15px; border-radius: 4px; border-left: 3px solid var(--code-green); margin: 15px 0; color: #a9b7c6; font-size: 0.95rem; overflow-x: auto; box-shadow: inset 0 0 10px #000; border: 1px solid #333;}
+        .kwd { color: #cc7832; font-weight:bold; } .str { color: #6a8759; } .func { color: #ffc66d; } .comment { color: #666; font-style: italic; }
+        .code-project { margin-bottom: 3rem; padding-left: 20px; border-left: 2px solid #333; }
+        .code-h2 { font-size: 1.5rem; color: var(--code-green); margin-bottom: 1rem; font-weight: 700; text-shadow: 0 0 8px rgba(0,255,0,0.5); }
+        .code-link { color: var(--code-text); text-decoration: none; border: 1px solid var(--code-dim); padding: 8px 20px; display: inline-block; margin-top: 15px; margin-right: 10px; transition: 0.2s; font-size: 0.9rem; background: #1a1a1a; font-weight: bold; letter-spacing: 1px;}
+        .code-link:hover { background: var(--code-green); color: #000; border-color: var(--code-green); box-shadow: 0 0 20px var(--code-green); }
+
+        @media (max-width: 768px) {
+            .glitch-name { font-size: 2.5rem; }
+            .novel-layout { flex-direction: column; }
+            .novel-cover-link { max-width: 100%; }
+            .glass-panel { padding: 1.5rem; }
+            .avatar-visual { width: 100px; height: 100px; font-size: 3rem; }
+            .full-width-stack .img-wrap { aspect-ratio: 16/9; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="control-panel">
+        <button class="control-btn" id="themeBtn" title="切換日夜模式">
+            <i class="fa-solid fa-sun"></i> </button>
+        <button class="control-btn" id="modeBtn" title="切換 視覺/程式 介面">
+            <i class="fa-solid fa-terminal"></i>
+        </button>
+    </div>
+
+    <div id="visual-mode" class="view-mode">
+        <div class="scan-lines"></div>
+        <div class="bg-glow"></div>
+        <div class="magic-particles" id="particles"></div>
+        <div class="cursor-dot"></div>
+        <div class="cursor-outline"></div>
+
+        <div class="container-visual">
+            <section style="text-align: center; margin-bottom: 5rem;">
+                <div class="avatar-visual">
+                    <div class="avatar-ring"></div>
+                    🦎
+                </div>
+                <h1 class="glitch-name" data-text="兌現藍">兌現藍</h1>
+                <div style="margin-bottom: 20px;">
+                    <span class="neon-tag">INTP 邏輯魔導士</span>
+                    <span class="neon-tag">爬蟲類</span>
+                    <span class="neon-tag">遊戲 Maker</span>
+                    <span class="neon-tag">Lv.25 創作者</span>
+                </div>
+                <p style="color: var(--text-sub); font-family: 'Orbitron'; letter-spacing: 1px;">SYSTEM ONLINE... WELCOME USER.</p>
+            </section>
+
+            <div class="glass-panel">
+                <h2 class="section-title"><i class="fa-solid fa-book-sparkles"></i> Grimoire: Word-Life Awakening</h2>
+                <div class="quote">「日常與末世漫畫的字命正在對撞，而你還在擔心學長有沒有開濾鏡？」</div>
+                <p style="color: var(--text-sub); margin-bottom: 1rem;">
+                    [系統提示] 偵測到高濃度迷因與校園奇幻反應。文字即代碼，創作即魔法。
+                </p>
+                
+                <div class="book-grid">
+                    <a href="https://www.kadokado.com.tw/book/1425" target="_blank" class="link-card">
+                        <div class="img-wrap">
+                            <img src="Story_Command1.jpg" alt="字命覺醒 VOL.1">
+                            <div class="overlay"><i class="fa-solid fa-book-open"></i><span>READ VOL.1</span></div>
+                        </div>
+                        <div class="book-label">VOL.1 覺醒篇</div>
+                    </a>
+                    <a href="https://www.kadokado.com.tw/book/42308" target="_blank" class="link-card">
+                        <div class="img-wrap">
+                            <img src="Story_Command2.jpg" alt="字命覺醒 VOL.2">
+                            <div class="overlay"><i class="fa-solid fa-book-open"></i><span>READ VOL.2</span></div>
+                        </div>
+                        <div class="book-label">VOL.2 進化篇</div>
+                    </a>
+                    <a href="https://www.kadokado.com.tw/book/65322" target="_blank" class="link-card">
+                        <div class="img-wrap">
+                            <img src="Story_Command0_Station_Underground_City_Rules.jpg" alt="地下城守則">
+                            <div class="overlay"><i class="fa-solid fa-scroll"></i><span>READ SIDE</span></div>
+                        </div>
+                        <div class="book-label">番外：地下城守則</div>
+                    </a>
+                </div>
+            </div>
+
+            <div class="glass-panel">
+                <h2 class="section-title"><i class="fa-solid fa-seedling"></i> New Release</h2>
+                <div class="novel-layout">
+                    <a href="https://www.kadokado.com.tw/book/60627" target="_blank" class="novel-cover-link">
+                        <img src="Crossing_the_Soil.jpg" alt="是誰把穿越者種在土裡">
+                        <div class="novel-overlay"><span class="neon-tag" style="background:var(--accent-color); color:#000; font-weight:bold;">點擊閱讀</span></div>
+                    </a>
+                    <div class="novel-info">
+                        <h3 style="font-size: 1.8rem; margin-bottom: 10px; color: var(--text-main);">是誰把穿越者種在土裡</h3>
+                        <div class="quote">「17歲的蘇海躍選擇結束生命，卻在陌生山林的泥土裡被挖了出來。」</div>
+                        <p style="color: var(--text-sub); margin-bottom: 1.5rem;">
+                            一個人類分為 ABO、幽靈依附費洛蒙、恐龍遊蕩於街頭的瘋狂世界。
+                            蘇海躍在這個怪異卻溫暖的日常中，遇見了蒼白如鬼的 Alpha 陸翎邑。
+                            新聞上另一個「完美的蘇海躍」失蹤案，揭開了橫跨兩個世界的巨大陰謀。
+                        </p>
+                        <a href="https://www.kadokado.com.tw/book/60627" target="_blank" class="neon-tag" style="text-decoration:none; text-align:center;">
+                            <i class="fa-solid fa-arrow-right"></i> 前往 KadoKado
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-panel">
+                <h2 class="section-title"><i class="fa-solid fa-gamepad"></i> Project: Nightmare</h2>
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+                    <h3 style="font-size: 1.4rem; margin-bottom: 5px;">反轉的真實 The Reversed Truth</h3>
+                    <div style="display:flex; gap:10px;">
+                        <a href="https://responselessaircra.wixsite.com/x-destroyer" target="_blank" class="neon-tag" style="text-decoration:none;">官網</a>
+                        <a href="https://forum.gamer.com.tw/C.php?bsn=4918&snA=28697" target="_blank" class="neon-tag" style="text-decoration:none;">巴哈</a>
+                    </div>
+                </div>
+                <p style="color: var(--accent-color); font-size: 0.9rem; margin-bottom: 1.5rem;">
+                    <i class="fa-solid fa-triangle-exclamation"></i> 警告：Sanity Check Required.
+                </p>
+                
+                <div class="full-width-stack">
+                    <a href="https://responselessaircra.wixsite.com/x-destroyer" target="_blank" class="link-card">
+                        <div class="img-wrap">
+                            <img src="Friend_or_Fraud1.jpg" alt="反轉的真實 PART 1">
+                            <div class="overlay"><i class="fa-solid fa-play"></i><span>PLAY PART 1</span></div>
+                        </div>
+                        <div class="book-label">PART 1: 表象的和平</div>
+                    </a>
+                    <a href="https://responselessaircra.wixsite.com/x-destroyer" target="_blank" class="link-card">
+                        <div class="img-wrap">
+                            <img src="Friend_or_Fraud2.jpg" alt="反轉的真實 PART 2">
+                            <div class="overlay"><i class="fa-solid fa-train"></i><span>PLAY PART 2</span></div>
+                        </div>
+                        <div class="book-label">PART 2: 崩壞的列車</div>
+                    </a>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 5rem;">
+                <h3 style="font-family: 'Orbitron'; margin-bottom: 1.5rem; color: var(--text-main); font-size: 1.8rem;">🔮 創作者屬性鑑定</h3>
+                <a href="https://arya601.github.io/College_Psychological_Test/" target="_blank" class="control-btn" style="width:auto; height:auto; padding:15px 40px; border-radius:8px; text-decoration:none; display:inline-flex;">
+                    開始鑑定儀式 <i class="fa-solid fa-wand-magic-sparkles" style="margin-left:10px;"></i>
+                </a>
+            </div>
+
+            <footer style="text-align: center; margin-top: 5rem; color: var(--text-sub); font-size: 0.8rem; font-family:'Orbitron';">
+                VISUAL TERMINAL // ONLINE<br>&copy; 2025 Duixian Lan. All rights reserved.
+            </footer>
+        </div>
+    </div>
+
+    <div id="code-mode" class="view-mode hidden">
+        <div class="container-code">
+            <header class="terminal-header">
+                <div class="cmd-line glow-text">user@duixian_lan:~$ init_sequence --full</div>
+                <h1 class="code-h1 typing-cursor" id="code-title"></h1>
+                <div id="code-bio" style="color: #888; margin-bottom: 1rem; opacity:0; transition: 0.5s;">
+                    [奇幻創作者] [遊戲Maker] [INTP] [魔羯座] [爬蟲類]
+                </div>
+                <div class="code-block-styled" id="code-intro" style="opacity:0; transition: 0.5s 0.2s;">
+                    <span class="kwd">class</span> <span class="func">Creator</span>(Reptile):<br>
+                    &nbsp;&nbsp;<span class="kwd">def</span> <span class="func">__init__</span>(self):<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;self.status = <span class="str">"被創作拖著走"</span><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;self.skills = [<span class="str">"Python"</span>, <span class="str">"Writing"</span>, <span class="str">"GameDev"</span>]<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># 文字是代碼，傳說是函式，正在 Debug 這個世界。</span>
+                </div>
+            </header>
+
+            <div class="code-content" style="opacity:0; transition: 1s 0.5s;">
+                <div class="code-project">
+                    <h2 class="code-h2">>> Projects / Word_Life_Awakening</h2>
+                    <div class="code-block-styled">
+                        <span class="kwd">def</span> <span class="func">cast_magic</span>(text):<br>
+                        &nbsp;&nbsp;<span class="kwd">if</span> meme <span class="kwd">in</span> text:<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">return</span> <span class="str">"Reality_Distortion"</span>
+                    </div>
+                    <a href="https://www.kadokado.com.tw/book/1425" target="_blank" class="code-link">Vol.1_Link</a>
+                    <a href="https://www.kadokado.com.tw/book/42308" target="_blank" class="code-link">Vol.2_Link</a>
+                    <a href="https://www.kadokado.com.tw/book/65322" target="_blank" class="code-link">Side_Story_Link</a>
+                </div>
+
+                <div class="code-project">
+                    <h2 class="code-h2">>> Projects / Crossing_the_Soil</h2>
+                    <p style="color:#a9b7c6">>> 17歲的蘇海躍選擇結束生命，卻在陌生山林的泥土裡被挖了出來。</p>
+                    <a href="https://www.kadokado.com.tw/book/60627" target="_blank" class="code-link">Read_Novel()</a>
+                </div>
+
+                <div class="code-project">
+                    <h2 class="code-h2" style="color: #ff3333; text-shadow: 0 0 10px #ff3333;">>> Projects / The_Reversed_Truth</h2>
+                    <p style="color: #ff3333;">>> ERROR: Sanity Check Required. Horror RPG.</p>
+                    <div class="code-block-styled" style="border-left-color: #ff3333; box-shadow: inset 0 0 10px #300;">
+                        <span class="kwd" style="color:#ff5555">while</span> <span class="kwd" style="color:#ff5555">True</span>:<br>
+                        &nbsp;&nbsp;truth = <span class="func" style="color:#ff8888">reverse</span>(reality)<br>
+                        &nbsp;&nbsp;<span class="kwd" style="color:#ff5555">if</span> truth == <span class="str" style="color:#ffaaaa">"BLOOD"</span>: <span class="kwd" style="color:#ff5555">break</span>
+                    </div>
+                    <a href="https://responselessaircra.wixsite.com/x-destroyer" target="_blank" class="code-link" style="border-color:#ff3333; color:#ff3333;">Official_Site</a>
+                    <a href="https://forum.gamer.com.tw/C.php?bsn=4918&snA=28697" target="_blank" class="code-link" style="border-color:#ff3333; color:#ff3333;">Bahamut_Thread</a>
+                </div>
+
+                <div class="code-project">
+                    <h2 class="code-h2">>> Execute / Creator_Test</h2>
+                    <a href="https://arya601.github.io/College_Psychological_Test/" target="_blank" class="code-link">Run_Test.exe</a>
+                </div>
+            </div>
+            
+            <footer style="margin-top: 3rem; color: #444; font-size: 0.8rem;">// CODE TERMINAL // ONLINE_</footer>
+        </div>
+    </div>
+
+    <script>
+        // 1. 粒子與游標 JS (維持不變)
+        const particles = document.getElementById('particles');
+        function createParticle() {
+            const p = document.createElement('div'); p.classList.add('particle');
+            const size = Math.random() * 2 + 1 + 'px'; p.style.width = size; p.style.height = size;
+            p.style.left = Math.random() * 100 + 'vw'; p.style.animationDuration = Math.random() * 5 + 8 + 's';
+            particles.appendChild(p); setTimeout(() => p.remove(), 13000);
+        }
+        setInterval(createParticle, 300);
+        const dot = document.querySelector('.cursor-dot'); const outline = document.querySelector('.cursor-outline');
+        window.addEventListener('mousemove', (e) => {
+            dot.style.left = e.clientX + 'px'; dot.style.top = e.clientY + 'px';
+            outline.animate({ left: e.clientX + 'px', top: e.clientY + 'px' }, { duration: 500, fill: "forwards" });
+        });
+        document.querySelectorAll('.glass-panel').forEach(panel => {
+            panel.addEventListener('mousemove', e => {
+                const rect = panel.getBoundingClientRect();
+                panel.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+                panel.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+            });
+        });
+
+        // 2. 切換邏輯
+        const themeBtn = document.getElementById('themeBtn');
+        const modeBtn = document.getElementById('modeBtn');
+        const themeIcon = themeBtn.querySelector('i');
+        const modeIcon = modeBtn.querySelector('i');
+        const visualMode = document.getElementById('visual-mode');
+        const codeMode = document.getElementById('code-mode');
+        const html = document.documentElement;
+
+        themeBtn.addEventListener('click', () => {
+            const isDark = html.getAttribute('data-theme') === 'dark';
+            html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            themeIcon.className = isDark ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+        });
+
+        // 程式版打字機動畫控制
+        let codeTyped = false;
+        function typeCodeHeader() {
+            if(codeTyped) return;
+            codeTyped = true;
+            const title = "兌現藍 Duixian Lan";
+            const titleEl = document.getElementById('code-title');
+            titleEl.innerHTML = "";
+            let i = 0;
+            function type() {
+                if (i < title.length) {
+                    titleEl.innerHTML += title.charAt(i); i++; setTimeout(type, 100);
+                } else {
+                    document.getElementById('code-bio').style.opacity = 1;
+                    document.getElementById('code-intro').style.opacity = 1;
+                    document.querySelector('.code-content').style.opacity = 1;
+                }
+            }
+            type();
+        }
+
+        modeBtn.addEventListener('click', () => {
+            const isVisual = !visualMode.classList.contains('hidden');
+            if (isVisual) {
+                visualMode.classList.add('hidden');
+                setTimeout(() => {
+                    visualMode.style.display = 'none'; codeMode.style.display = 'block';
+                    setTimeout(() => {
+                        codeMode.classList.remove('hidden');
+                        typeCodeHeader(); // 啟動打字動畫
+                    }, 50);
+                }, 500);
+                modeIcon.className = 'fa-solid fa-palette';
+                themeBtn.style.display = 'none';
+            } else {
+                codeMode.classList.add('hidden');
+                setTimeout(() => {
+                    codeMode.style.display = 'none'; visualMode.style.display = 'block';
+                    setTimeout(() => visualMode.classList.remove('hidden'), 50);
+                }, 500);
+                modeIcon.className = 'fa-solid fa-terminal';
+                themeBtn.style.display = 'flex';
+            }
+        });
+    </script>
+</body>
+</html>
