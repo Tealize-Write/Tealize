@@ -5,12 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="dark light" />
   <meta name="theme-color" content="#030507" />
+  <meta name="description" content="兌現藍 Tealize - 奇幻創作者的數位基地。探索《字命覺醒》、《是誰把穿越者種在土裡》與《反轉的真實》等作品。" />
   <title>兌現藍 | Tealize 的奇幻基地</title>
+
+  <!-- PWA Support -->
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="avatar_white.jpg" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Noto+Sans+TC:wght@300;400;700&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <!-- Theme Flash Prevention -->
+  <script>
+    (function() {
+      try {
+        const savedTheme = localStorage.getItem("tealize.theme");
+        const savedMode = localStorage.getItem("tealize.mode");
+        if (savedTheme) document.documentElement.setAttribute("data-theme", savedTheme);
+        if (savedMode) document.documentElement.setAttribute("data-mode", savedMode);
+      } catch(e) {}
+    })();
+  </script>
 
   <style>
     :root {
@@ -67,10 +84,29 @@
     a { color: inherit; }
     a, button { -webkit-tap-highlight-color: transparent; }
 
+    /* Skip to main content for screen readers */
+    .skip-to-main {
+      position: absolute;
+      left: -9999px;
+      z-index: 999;
+      padding: 1em;
+      background-color: var(--accent-color);
+      color: var(--bg-color);
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .skip-to-main:focus {
+      left: 50%;
+      transform: translateX(-50%);
+      top: 10px;
+    }
+
     /* ===== Focus ===== */
     :focus-visible {
-      outline: 2px solid var(--accent-color);
+      outline: 3px solid var(--accent-color);
       outline-offset: 4px;
+      border-radius: 4px;
     }
 
     /* ===== Control Panel ===== */
@@ -939,6 +975,9 @@
 </head>
 
 <body>
+  <!-- Accessibility: Skip to main content -->
+  <a href="#main-content" class="skip-to-main">跳到主要內容</a>
+
   <div class="cursor-dot" aria-hidden="true"></div>
   <div class="cursor-outline" aria-hidden="true"></div>
 
@@ -956,7 +995,7 @@
     <div class="bg-glow" aria-hidden="true"></div>
     <canvas id="particlesCanvas" aria-hidden="true"></canvas>
 
-    <main class="container-visual">
+    <main id="main-content" class="container-visual">
       <header class="hero">
         <div class="avatar-visual" aria-label="Avatar">
           <div class="avatar-ring" aria-hidden="true"></div>
@@ -1492,9 +1531,18 @@
         anchor.addEventListener("click", function (e) {
           e.preventDefault();
           const target = document.querySelector(this.getAttribute("href"));
-          target?.scrollIntoView({ behavior: "smooth", block: "start" });
+          if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
         });
       });
+
+      // Service Worker Registration (PWA)
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log('SW registered'))
+            .catch(err => console.log('SW registration failed'));
+        });
+      }
     })();
   </script>
 </body>
